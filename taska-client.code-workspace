@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "client/taska-client"
+		},
+		{
+			"path": "server/taska-server"
+		},
+		{
+			"path": "../tnet"
+		}
+	],
+	"settings": {}
+}

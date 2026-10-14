@@ -1,0 +1,23 @@
+services:
+  server:
+    build: ./server/taska-server
+    ports:
+      - "4000:4000"
+    environment:
+      - PORT=4000
+      - DATABASE_PATH=/app/data/database.sqlite
+    volumes:
+      - server_data:/app/data
+    restart: unless-stopped
+
+  client:
+    build:
+      context: ./client/taska-client
+    ports:
+      - "3000:3000"
+    depends_on:
+      - server
+    restart: unless-stopped
+
+volumes:
+  server_data:
