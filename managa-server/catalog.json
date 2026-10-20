@@ -1,0 +1,13 @@
+{
+  "apps": [
+    {
+      "id": "taska",
+      "name": "Taska",
+      "description": "A focused task-list app with drag-and-drop lists, due dates and an edit mode. Bundled as the reference Managá app.",
+      "version": "0.1.0",
+      "icon": "✅",
+      "tags": ["bundled", "productivity", "reference"],
+      "builtin": true
+    }
+  ]
+}

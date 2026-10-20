@@ -1,23 +1,28 @@
 services:
-  server:
-    build: ./server/taska-server
+  managa-server:
+    build:
+      context: .
+      dockerfile: managa-server/Dockerfile
     ports:
-      - "4000:4000"
+      - "5100:5100"
+      - "3100-4199:3100-4199"
     environment:
-      - PORT=4000
-      - DATABASE_PATH=/app/data/database.sqlite
+      - PORT=5100
+      - MANAGA_ROOT_DIR=/app
+      - MANAGA_DATA_DIR=/app/data
+      - AUTO_START=true
     volumes:
-      - server_data:/app/data
+      - managa_data:/app/data
     restart: unless-stopped
 
-  client:
+  managa-client:
     build:
-      context: ./client/taska-client
+      context: ./managa-client
     ports:
       - "3000:3000"
     depends_on:
-      - server
+      - managa-server
     restart: unless-stopped
 
 volumes:
-  server_data:
+  managa_data:

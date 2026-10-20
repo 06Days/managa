@@ -1,0 +1,37 @@
+{
+  "$schema": "./managa-server/schema/app-manifest.schema.json",
+  "id": "taska",
+  "name": "Taska",
+  "description": "A focused task-list app with drag-and-drop lists, due dates and an edit mode. Bundled as the reference Managá app.",
+  "version": "0.1.0",
+  "author": "Toby Cammock-Elliott",
+  "icon": "✅",
+  "tags": ["bundled", "productivity", "reference"],
+  "client": {
+    "dir": "client/taska-client",
+    "port": 3100,
+    "install": "npm ci --no-audit --no-fund",
+    "build": "npm run build",
+    "buildOutput": ".next",
+    "start": "npm run start",
+    "healthPath": "/",
+    "readyTimeoutMs": 60000,
+    "env": {
+      "NEXT_PUBLIC_API_URL": "{{serverUrl}}",
+      "TASKA_API_URL": "{{serverUrl}}"
+    }
+  },
+  "server": {
+    "dir": "server/taska-server",
+    "port": 4100,
+    "install": "npm ci --no-audit --no-fund",
+    "build": "npm run build",
+    "buildOutput": "dist",
+    "start": "npm run start:prod",
+    "healthPath": "/",
+    "readyTimeoutMs": 45000,
+    "env": {
+      "DATABASE_PATH": "{{appDataDir}}/database.sqlite"
+    }
+  }
+}

@@ -8,9 +8,11 @@ import Navbar from "@/app/taska/components/navbar";
 import TaskCard from "@/app/taska/components/TaskCard";
 import AddTasklistModal from "@/app/taska/components/AddTasklistModal"; // Adjust path if needed
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined'
-  ? `${window.location.protocol}//${window.location.hostname}:4000`
-  : 'http://localhost:4000');
+// managa builds this app with NEXT_PUBLIC_API_URL set to the allocated Taska
+// API port. When it is absent the client uses same-origin requests, which are
+// proxied to the API by the rewrites in next.config.ts.
+const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? '').replace(/\/+$/, '');
+const api = (path: string) => `${API_URL}${path}`;
 
 export default function TaskaList() {
   const [lists, setTaskLists] = useState<TaskList[]>([]);
@@ -24,7 +26,7 @@ export default function TaskaList() {
 
   const loadAll = async () => {
     try {
-      const res = await fetch(`${API_URL}/task-lists`);
+      const res = await fetch(api('/task-lists'));
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setTaskLists(data);
@@ -40,7 +42,7 @@ export default function TaskaList() {
   const handleAddList = (title: string) => {
     const newList = { title, name: title }; // Adapt fields based on your backend needs
 
-    fetch(`${API_URL}/task-lists`, {
+    fetch(api('/task-lists'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newList),
@@ -54,7 +56,7 @@ export default function TaskaList() {
   };
 
   const handleDeleteList = (listId: number) => {
-    fetch(`${API_URL}/task-lists/${listId}`, {
+    fetch(api(`/task-lists/${listId}`), {
       method: 'DELETE',
     })
       .then(() => {
@@ -66,7 +68,7 @@ export default function TaskaList() {
   const handleAddTask = (listId: number, title: string, dueDate: string) => {
     const newTask = { title, due_date: dueDate, done: false };
 
-    fetch(`${API_URL}/task-lists/${listId}/tasks`, {
+    fetch(api(`/task-lists/${listId}/tasks`), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newTask),
@@ -81,7 +83,7 @@ export default function TaskaList() {
   };
 
   const handleDeleteTask = (taskId: number, listId: number) => {
-    fetch(`${API_URL}/task-lists/${listId}/tasks/${taskId}`, {
+    fetch(api(`/task-lists/${listId}/tasks/${taskId}`), {
       method: 'DELETE',
     })
       .then(() => {
@@ -93,7 +95,7 @@ export default function TaskaList() {
   };
 
   const toggleTaskDone = (taskId: number, listId: number) => {
-    fetch(`${API_URL}/task-lists/${listId}/tasks/${taskId}/toggle`, {
+    fetch(api(`/task-lists/${listId}/tasks/${taskId}/toggle`), {
       method: 'POST',
     })
       .then((res) => res.json())
@@ -112,7 +114,7 @@ export default function TaskaList() {
     ));
 
     if (saveToBackend) {
-      fetch(`${API_URL}/task-lists/${listId}/tasks/swap`, {
+      fetch(api(`/task-lists/${listId}/tasks/swap`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tasks: newTasks }),
@@ -121,7 +123,7 @@ export default function TaskaList() {
   };
 
   const handleUpdateListTitle = (listId: number, newTitle: string) => {
-    fetch(`${API_URL}/task-lists/${listId}`, {
+    fetch(api(`/task-lists/${listId}`), {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ title: newTitle }),
@@ -136,7 +138,7 @@ export default function TaskaList() {
   };
 
   const handleUpdateTaskTitle = (taskId: number, listId: number, newTitle: string) => {
-    fetch(`${API_URL}/task-lists/${listId}/tasks/${taskId}`, {
+    fetch(api(`/task-lists/${listId}/tasks/${taskId}`), {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ title: newTitle }),

@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://managa.local/schema/app-manifest.schema.json",
+  "title": "managa app manifest",
+  "description": "Place this file at managa.app.json in the root of a compatible app repository.",
+  "type": "object",
+  "required": ["name"],
+  "anyOf": [{ "required": ["client"] }, { "required": ["server"] }],
+  "additionalProperties": true,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Optional JSON Schema reference."
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-_]*$",
+      "description": "Stable app id. Derived from the name when omitted."
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Display name shown on dashboard cards."
+    },
+    "description": {
+      "type": "string",
+      "description": "Short description shown on dashboard cards."
+    },
+    "version": {
+      "type": "string",
+      "description": "App version. Defaults to 0.1.0."
+    },
+    "author": { "type": "string" },
+    "icon": {
+      "type": "string",
+      "description": "Emoji or short text used as the card icon."
+    },
+    "homepage": { "type": "string", "format": "uri" },
+    "repository": { "type": "string", "format": "uri" },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "client": { "$ref": "#/$defs/component" },
+    "server": { "$ref": "#/$defs/component" }
+  },
+  "$defs": {
+    "component": {
+      "type": "object",
+      "required": ["dir", "start"],
+      "additionalProperties": true,
+      "properties": {
+        "dir": {
+          "type": "string",
+          "description": "Component directory, relative to the app root."
+        },
+        "start": {
+          "type": "string",
+          "description": "Command used to run the component in the foreground."
+        },
+        "install": {
+          "type": "string",
+          "description": "Optional command run when node_modules is missing."
+        },
+        "build": {
+          "type": "string",
+          "description": "Optional production build command."
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "Preferred port. managa reallocates if it is taken."
+        },
+        "healthPath": {
+          "type": "string",
+          "default": "/",
+          "description": "HTTP path polled while the component boots."
+        },
+        "readyTimeoutMs": {
+          "type": "integer",
+          "minimum": 1000,
+          "description": "How long to wait for the health endpoint. Defaults to 45000."
+        },
+        "buildOutput": {
+          "type": "string",
+          "description": "Artefact checked after building, such as .next or dist."
+        },
+        "env": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "Environment variables. Supports {{serverUrl}}, {{clientUrl}}, {{serverPort}}, {{clientPort}}, {{appDir}}, {{componentDir}}, {{appDataDir}}, {{dataDir}}, {{appId}} and {{appName}}."
+        }
+      }
+    }
+  }
+}

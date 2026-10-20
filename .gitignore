@@ -1,1 +1,24 @@
-/server/taska-server/node_modules
+# dependencies
+node_modules/
+
+# builds
+.next/
+dist/
+*.tsbuildinfo
+
+# managa runtime state (registry, cloned apps, logs)
+/data/
+
+# local environment
+.env
+.env.local
+.env.*.local
+!.env.example
+!.env.local.example
+
+# logs
+*.log
+
+# OS/editor
+.DS_Store
+Thumbs.db

@@ -26,7 +26,7 @@ exports.AppModule = AppModule = __decorate([
         imports: [task_list_module_1.TaskListModule,
             typeorm_1.TypeOrmModule.forRoot({
                 type: 'better-sqlite3',
-                database: 'database.sqlite',
+                database: process.env.DATABASE_PATH ?? 'database.sqlite',
                 entities: [task_entity_1.Task, task_list_entity_1.TaskList],
                 synchronize: true,
             }),
