@@ -294,6 +294,27 @@ The server image includes git and build tools because installed apps run inside
 the container. Managed app ports `3100–4199` are published, and `data/` is a
 volume. The dashboard is available on `:3000` and the API on `:5100`.
 
+### Raspberry Pi and ARM hosts
+
+The server image is pinned to `node:22-alpine3.22` and retries `apk` package
+installs so a transient mirror or DNS failure does not break the build. For the
+smoothest experience use 64-bit Raspberry Pi OS; check with `uname -m`
+(`aarch64` is 64-bit, `armv7l` is 32-bit).
+
+If `apk add` still fails during `docker compose up --build`:
+
+```bash
+# confirm the host has free space
+df -h
+
+# see the actual apk error instead of only the exit code
+docker build --progress=plain --no-cache \
+  -f managa-server/Dockerfile . 2>&1 | tail -50
+
+# if the build container cannot resolve dl-cdn.alpinelinux.org, use host DNS
+docker build --network=host -f managa-server/Dockerfile .
+```
+
 ## Security and limitations
 
 - App manifests are executable configuration. Install/build/start commands run
