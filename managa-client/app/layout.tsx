@@ -41,7 +41,7 @@ export default function RootLayout({
               app manager
             </span>
             <span className="font-monospace">
-              server :5100 · apps on :3100–:4199
+              server :5100 · apps on dynamic ports
             </span>
           </div>
         </footer>

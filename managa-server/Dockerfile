@@ -41,7 +41,8 @@ ENV NODE_ENV=production \
     PORT=5100 \
     MANAGA_ROOT_DIR=/app \
     MANAGA_DATA_DIR=/app/data
-EXPOSE 5100 3100-4199
+# Managed apps bind their ports on the host network; only the API is fixed.
+EXPOSE 5100
 VOLUME ["/app/data"]
 WORKDIR /app/managa-server
 CMD ["npm", "run", "start:prod"]

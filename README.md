@@ -260,7 +260,7 @@ immediately. Poll the job for progress and logs.
 | `PORT` | `5100` | managa server port |
 | `MANAGA_ROOT_DIR` | parent of `managa-server` | Repository root |
 | `MANAGA_DATA_DIR` | `<root>/data` | Registry, clones, logs, app data |
-| `MANAGA_PUBLIC_HOST` | `http://localhost` | Host used in app URLs |
+| `MANAGA_PUBLIC_HOST` | `http://localhost` | Host used in app URLs; set to the Pi's hostname/IP in Docker |
 | `AUTO_START` | `true` | Restart enabled apps when managa-server boots |
 | `MANAGA_BUILTIN_MANIFESTS` | `taska.app.json` | Comma-separated bundled manifests |
 | `MANAGA_CATALOG_URL` | — | Optional remote catalog JSON |
@@ -286,13 +286,42 @@ The dashboard reads `NEXT_PUBLIC_MANAGA_API_URL`; when unset it uses
 
 ## Docker
 
+Docker deployment uses **host networking** for both containers:
+
 ```bash
-docker compose up --build
+MANAGA_PUBLIC_HOST=http://raspberrypi.local docker compose up --build -d
 ```
 
-The server image includes git and build tools because installed apps run inside
-the container. Managed app ports `3100–4199` are published, and `data/` is a
-volume. The dashboard is available on `:3000` and the API on `:5100`.
+Managed apps bind their allocated ports directly on the host. Docker cannot add
+published ports to a running container, so bridge networking would require
+publishing the entire managed port range up front. That creates one
+`docker-proxy` process per port (over a thousand), which exhausts small hosts
+such as a Raspberry Pi. Host networking avoids that and exposes only the ports
+that running apps actually use.
+
+The dashboard is available on `:3000`, the API on `:5100`, and each running app
+on its allocated port. `data/` is a Docker volume.
+
+`MANAGA_PUBLIC_HOST` must be the address you use to reach the host. It is used
+for the **Open** links and baked into app client builds as the API URL. If you
+only open the dashboard from the Pi itself, the default `http://localhost`
+works. From another machine, set it to the Pi's hostname or IP. Changing it
+later requires rebuilding already-installed apps so their client bundles pick
+up the new API URL.
+
+For example:
+
+```bash
+# Either inline:
+MANAGA_PUBLIC_HOST=http://tnetserver docker compose up --build -d
+
+# Or in a .env file next to compose.yaml:
+echo 'MANAGA_PUBLIC_HOST=http://tnetserver' > .env
+docker compose up --build -d
+```
+
+Docker host networking requires a Linux host (including Raspberry Pi OS). For
+local development on macOS or Windows, use `npm run dev` instead.
 
 ### Raspberry Pi and ARM hosts
 

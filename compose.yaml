@@ -3,15 +3,18 @@ services:
     build:
       context: .
       dockerfile: managa-server/Dockerfile
-    ports:
-      - "5100:5100"
-      # managed apps run inside this container on allocated ports
-      - "3100-4199:3100-4199"
+    # Managed apps bind their allocated ports at runtime. Docker cannot add
+    # published ports to a running container, so host networking avoids
+    # publishing a large port range (and spawning one docker-proxy per port).
+    network_mode: host
     environment:
       - PORT=5100
       - MANAGA_ROOT_DIR=/app
       - MANAGA_DATA_DIR=/app/data
       - AUTO_START=true
+      # Set this to the address used to reach the host, for example
+      # http://raspberrypi.local or http://192.168.1.50.
+      - MANAGA_PUBLIC_HOST=${MANAGA_PUBLIC_HOST:-http://localhost}
     volumes:
       - managa_data:/app/data
     restart: unless-stopped
@@ -19,8 +22,10 @@ services:
   managa-client:
     build:
       context: ./managa-client
-    ports:
-      - "3000:3000"
+    network_mode: host
+    environment:
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
     depends_on:
       - managa-server
     restart: unless-stopped
