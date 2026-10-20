@@ -69,8 +69,8 @@ export default function AppDetailPage() {
 
   if (loading && !app) {
     return (
-      <div className="detail-loading">
-        <span className="spinner" />
+      <div className="d-flex justify-content-center align-items-center gap-2 text-secondary py-5">
+        <span className="spinner-border spinner-border-sm" />
         Loading app…
       </div>
     );
@@ -78,18 +78,25 @@ export default function AppDetailPage() {
 
   if (error || !app) {
     return (
-      <div className="connection-card">
-        <div className="connection-icon">
-          <Icon name="alert" size={24} />
+      <div className="card border-danger">
+        <div className="card-body d-flex flex-wrap align-items-center gap-3">
+          <span className="job-state text-bg-danger">
+            <Icon name="alert" size={22} />
+          </span>
+          <div className="flex-grow-1">
+            <h2 className="h5 mb-1">App unavailable</h2>
+            <p className="text-secondary mb-0">
+              {error ?? "This app is not installed."}
+            </p>
+          </div>
+          <Link
+            className="btn btn-outline-secondary d-inline-flex align-items-center gap-1"
+            href="/"
+          >
+            <Icon name="arrow-left" size={16} />
+            Dashboard
+          </Link>
         </div>
-        <div>
-          <h2>App unavailable</h2>
-          <p>{error ?? "This app is not installed."}</p>
-        </div>
-        <Link className="btn btn-ghost" href="/">
-          <Icon name="arrow-left" size={16} />
-          Dashboard
-        </Link>
       </div>
     );
   }
@@ -100,53 +107,63 @@ export default function AppDetailPage() {
 
   return (
     <>
-      <Link className="back-link" href="/">
+      <Link
+        className="link-secondary text-decoration-none small d-inline-flex align-items-center gap-1 mb-3"
+        href="/"
+      >
         <Icon name="arrow-left" size={15} />
         All apps
       </Link>
 
-      <header className="detail-hero">
-        <div className="app-icon detail-icon" aria-hidden="true">
-          {app.icon || "📦"}
-        </div>
-        <div className="detail-title">
-          <div className="detail-title-row">
-            <h1>{app.name}</h1>
-            <StatusPill status={app.overallStatus} />
+      <header className="card mb-3">
+        <div className="card-body d-flex flex-wrap align-items-center gap-3">
+          <div className="app-icon app-icon-lg" aria-hidden="true">
+            {app.icon || "📦"}
           </div>
-          <p>{app.description || "No description provided."}</p>
-          <div className="detail-meta mono muted">
-            <span>v{app.version}</span>
-            <span>·</span>
-            <span>
-              {app.source.type === "github"
-                ? `github.com/${app.source.url
-                    .replace(/^https?:\/\/github\.com\//, "")
-                    .replace(/\.git$/, "")}`
-                : "bundled"}
+          <div className="flex-grow-1 min-w-0">
+            <div className="d-flex flex-wrap align-items-center gap-2">
+              <h1 className="h3 mb-0">{app.name}</h1>
+              <StatusPill status={app.overallStatus} />
+            </div>
+            <p className="text-secondary mb-1">
+              {app.description || "No description provided."}
+            </p>
+            <div className="small text-secondary font-monospace d-flex flex-wrap gap-2">
+              <span>v{app.version}</span>
+              <span aria-hidden="true">·</span>
+              <span>
+                {app.source.type === "github"
+                  ? `github.com/${app.source.url
+                      .replace(/^https?:\/\/github\.com\//, "")
+                      .replace(/\.git$/, "")}`
+                  : "bundled"}
+              </span>
+              <span aria-hidden="true">·</span>
+              <span>installed {timeAgo(app.installedAt)}</span>
+            </div>
+          </div>
+          <div className="d-flex align-items-center gap-2">
+            <span className="small text-secondary">
+              {app.enabled ? "On" : "Off"}
             </span>
-            <span>·</span>
-            <span>installed {timeAgo(app.installedAt)}</span>
+            <Toggle
+              checked={app.enabled}
+              disabled={busy}
+              onChange={(enabled) =>
+                void run(() => api.toggle(app.id, enabled))
+              }
+              label={`Turn ${app.name} ${app.enabled ? "off" : "on"}`}
+            />
           </div>
-        </div>
-        <div className="detail-toggle">
-          <span className="muted">{app.enabled ? "On" : "Off"}</span>
-          <Toggle
-            checked={app.enabled}
-            disabled={busy}
-            onChange={(enabled) =>
-              void run(() => api.toggle(app.id, enabled))
-            }
-            label={`Turn ${app.name} ${app.enabled ? "off" : "on"}`}
-          />
         </div>
       </header>
 
       {notice ? (
         <div
-          className={`notice ${
-            job?.status === "failed" ? "notice-error" : "notice-info"
-          }`}
+          className={`alert ${
+            job?.status === "failed" ? "alert-danger" : "alert-info"
+          } d-flex align-items-center gap-2`}
+          role="status"
         >
           <Icon
             name={job?.status === "failed" ? "alert" : "sparkles"}
@@ -156,10 +173,10 @@ export default function AppDetailPage() {
         </div>
       ) : null}
 
-      <div className="detail-actions">
+      <div className="d-flex flex-wrap align-items-center gap-2 mb-4">
         {app.openUrl && app.overallStatus !== "stopped" ? (
           <a
-            className="btn btn-primary"
+            className="btn btn-primary d-inline-flex align-items-center gap-1"
             href={app.openUrl}
             target="_blank"
             rel="noreferrer"
@@ -168,14 +185,14 @@ export default function AppDetailPage() {
             Open app
           </a>
         ) : (
-          <button className="btn btn-primary" disabled>
+          <button className="btn btn-primary d-inline-flex align-items-center gap-1" disabled>
             <Icon name="external" size={16} />
             Open app
           </button>
         )}
 
         <button
-          className="btn btn-ghost"
+          className="btn btn-outline-secondary d-inline-flex align-items-center gap-1"
           onClick={() => {
             setLogs({ component: app.server ? "server" : "client" });
           }}
@@ -185,7 +202,7 @@ export default function AppDetailPage() {
         </button>
 
         <button
-          className="btn btn-ghost"
+          className="btn btn-outline-secondary d-inline-flex align-items-center gap-1"
           onClick={() => void run(() => api.rebuild(app.id))}
           disabled={busy || app.enabled}
           title={
@@ -196,10 +213,10 @@ export default function AppDetailPage() {
           Rebuild
         </button>
 
-        <span className="spacer" />
+        <div className="ms-auto" />
 
         <button
-          className="btn btn-danger-ghost"
+          className="btn btn-outline-danger d-inline-flex align-items-center gap-1"
           onClick={() => setConfirmUninstall(true)}
           disabled={busy}
         >
@@ -208,136 +225,163 @@ export default function AppDetailPage() {
         </button>
       </div>
 
-      <section className="component-grid">
+      <section className="row row-cols-1 row-cols-lg-2 g-3 mb-4">
         {components.map((component) => (
-          <article className="component-card" key={component.kind}>
-            <header>
-              <span className="component-icon">
-                <Icon
-                  name={component.kind === "server" ? "server" : "monitor"}
-                  size={20}
-                />
-              </span>
-              <div>
-                <h3>{component.kind}</h3>
-                <span className="mono muted">{component.dir}</span>
-              </div>
-              <StatusPill status={component.status} small />
-            </header>
+          <div className="col" key={component.kind}>
+            <article className="card h-100">
+              <div className="card-body d-flex flex-column gap-3">
+                <div className="d-flex align-items-center gap-3">
+                  <span className="app-icon">
+                    <Icon
+                      name={component.kind === "server" ? "server" : "monitor"}
+                      size={20}
+                    />
+                  </span>
+                  <div className="flex-grow-1 min-w-0">
+                    <h2 className="h6 text-capitalize mb-0">
+                      {component.kind}
+                    </h2>
+                    <span className="small font-monospace text-secondary text-break">
+                      {component.dir}
+                    </span>
+                  </div>
+                  <StatusPill status={component.status} small />
+                </div>
 
-            <dl className="component-details">
-              <div>
-                <dt>Port</dt>
-                <dd className="mono">{component.port}</dd>
-              </div>
-              <div>
-                <dt>URL</dt>
-                <dd>
+                <dl className="row row-cols-2 g-3 small mb-0">
+                  <div className="col">
+                    <dt className="text-secondary fw-normal">Port</dt>
+                    <dd className="font-monospace mb-0">{component.port}</dd>
+                  </div>
+                  <div className="col">
+                    <dt className="text-secondary fw-normal">PID</dt>
+                    <dd className="font-monospace mb-0">
+                      {component.pid ?? "—"}
+                    </dd>
+                  </div>
+                  <div className="col">
+                    <dt className="text-secondary fw-normal">URL</dt>
+                    <dd className="mb-0">
+                      <a
+                        className="font-monospace link-info text-decoration-none text-break"
+                        href={component.url}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {component.url.replace(/^https?:\/\//, "")}
+                      </a>
+                    </dd>
+                  </div>
+                  <div className="col">
+                    <dt className="text-secondary fw-normal">Started</dt>
+                    <dd className="mb-0">{timeAgo(component.startedAt)}</dd>
+                  </div>
+                </dl>
+
+                <div className="bg-body-tertiary border rounded-2 p-2 d-flex gap-2 small overflow-auto">
+                  <span className="text-secondary">start</span>
+                  <code className="text-body text-break">
+                    {component.startCommand}
+                  </code>
+                </div>
+
+                {component.lastError ? (
+                  <div className="alert alert-danger small mb-0" role="alert">
+                    {component.lastError}
+                  </div>
+                ) : null}
+
+                <div className="d-flex flex-wrap gap-2 mt-auto">
+                  <button
+                    className="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1"
+                    onClick={() => setLogs({ component: component.kind })}
+                  >
+                    <Icon name="terminal" size={15} />
+                    View logs
+                  </button>
                   <a
-                    className="mono"
+                    className="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1"
                     href={component.url}
                     target="_blank"
                     rel="noreferrer"
                   >
-                    {component.url.replace(/^https?:\/\//, "")}
+                    <Icon name="external" size={15} />
+                    Open
                   </a>
-                </dd>
+                </div>
               </div>
-              <div>
-                <dt>PID</dt>
-                <dd className="mono">{component.pid ?? "—"}</dd>
-              </div>
-              <div>
-                <dt>Started</dt>
-                <dd>{timeAgo(component.startedAt)}</dd>
-              </div>
-            </dl>
-
-            <div className="component-command">
-              <span className="muted">start</span>
-              <code>{component.startCommand}</code>
-            </div>
-
-            {component.lastError ? (
-              <div className="notice notice-error component-error-box">
-                {component.lastError}
-              </div>
-            ) : null}
-
-            <footer>
-              <button
-                className="btn btn-ghost btn-sm"
-                onClick={() => setLogs({ component: component.kind })}
-              >
-                <Icon name="terminal" size={15} />
-                View logs
-              </button>
-              <a
-                className="btn btn-ghost btn-sm"
-                href={component.url}
-                target="_blank"
-                rel="noreferrer"
-              >
-                <Icon name="external" size={15} />
-                Open
-              </a>
-            </footer>
-          </article>
+            </article>
+          </div>
         ))}
       </section>
 
-      <section className="detail-grid">
-        <article className="panel">
-          <h2>About this app</h2>
-          <dl className="info-list">
-            <div>
-              <dt>App id</dt>
-              <dd className="mono">{app.id}</dd>
+      <div className="row">
+        <div className="col-lg-8">
+          <article className="card">
+            <div className="card-body">
+              <h2 className="h5 mb-3">About this app</h2>
+              <ul className="list-group list-group-flush">
+                <li className="list-group-item d-flex justify-content-between gap-3 bg-transparent px-0">
+                  <span className="text-secondary">App id</span>
+                  <span className="font-monospace text-break text-end">
+                    {app.id}
+                  </span>
+                </li>
+                <li className="list-group-item d-flex justify-content-between gap-3 bg-transparent px-0">
+                  <span className="text-secondary">Version</span>
+                  <span>{app.version}</span>
+                </li>
+                {app.author ? (
+                  <li className="list-group-item d-flex justify-content-between gap-3 bg-transparent px-0">
+                    <span className="text-secondary">Author</span>
+                    <span>{app.author}</span>
+                  </li>
+                ) : null}
+                <li className="list-group-item d-flex justify-content-between gap-3 bg-transparent px-0">
+                  <span className="text-secondary">Source</span>
+                  <span className="text-break text-end">
+                    {app.source.type === "github" ? (
+                      <a
+                        className="link-info text-decoration-none"
+                        href={app.source.url.replace(/\.git$/, "")}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {app.source.url.replace(/\.git$/, "")}
+                      </a>
+                    ) : (
+                      <span className="font-monospace">
+                        {app.source.manifestPath}
+                      </span>
+                    )}
+                  </span>
+                </li>
+                {app.source.type === "github" && app.source.commit ? (
+                  <li className="list-group-item d-flex justify-content-between gap-3 bg-transparent px-0">
+                    <span className="text-secondary">Commit</span>
+                    <span className="font-monospace">
+                      {app.source.commit.slice(0, 12)}
+                    </span>
+                  </li>
+                ) : null}
+                <li className="list-group-item d-flex justify-content-between gap-3 bg-transparent px-0">
+                  <span className="text-secondary">Updated</span>
+                  <span>{timeAgo(app.updatedAt)}</span>
+                </li>
+              </ul>
+              {app.tags.length > 0 ? (
+                <div className="d-flex flex-wrap gap-1 mt-3">
+                  {app.tags.map((tag) => (
+                    <span className="badge text-bg-secondary" key={tag}>
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
             </div>
-            <div>
-              <dt>Version</dt>
-              <dd>{app.version}</dd>
-            </div>
-            {app.author ? (
-              <div>
-                <dt>Author</dt>
-                <dd>{app.author}</dd>
-              </div>
-            ) : null}
-            <div>
-              <dt>Source</dt>
-              <dd>
-                {app.source.type === "github" ? (
-                  <a href={app.source.url.replace(/\.git$/, "")} target="_blank" rel="noreferrer">
-                    {app.source.url.replace(/\.git$/, "")}
-                  </a>
-                ) : (
-                  <span className="mono">{app.source.manifestPath}</span>
-                )}
-              </dd>
-            </div>
-            {app.source.type === "github" && app.source.commit ? (
-              <div>
-                <dt>Commit</dt>
-                <dd className="mono">{app.source.commit.slice(0, 12)}</dd>
-              </div>
-            ) : null}
-            <div>
-              <dt>Updated</dt>
-              <dd>{timeAgo(app.updatedAt)}</dd>
-            </div>
-          </dl>
-          {app.tags.length > 0 ? (
-            <div className="tag-row">
-              {app.tags.map((tag) => (
-                <span className="tag" key={tag}>
-                  {tag}
-                </span>
-              ))}
-            </div>
-          ) : null}
-        </article>
-      </section>
+          </article>
+        </div>
+      </div>
 
       <LogsDialog
         app={app}

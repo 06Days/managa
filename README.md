@@ -74,6 +74,7 @@ managa/
 ├── managa-client/            Next.js dashboard
 │   ├── app/                  dashboard, app detail, catalog, install
 │   ├── components/
+│   ├── public/vendor/        vendored Bootstrap CSS and icon fonts
 │   └── lib/ + hooks/         typed API client and polling hooks
 ├── client/taska-client/      bundled Taska client (sample compatible app)
 ├── server/taska-server/      bundled Taska server (sample compatible app)
@@ -216,6 +217,14 @@ app.
 
 The dashboard polls the managa server every few seconds, so status updates and
 auto-start transitions appear without a refresh.
+
+### Offline UI assets
+
+The dashboard is built on Bootstrap 5.3.8 with Bootstrap Icons 1.13.1. Both are
+checked into `managa-client/public/vendor/` together with their web fonts, and
+`app/layout.tsx` loads them from `/vendor/...`. There are no CDN links, remote
+fonts or external images, so the dashboard renders fully offline. The favicon is
+a local SVG at `managa-client/public/favicon.svg`.
 
 ## API
 

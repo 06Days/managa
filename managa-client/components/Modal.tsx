@@ -1,7 +1,6 @@
 "use client";
 
 import { ReactNode, useEffect } from "react";
-import { Icon } from "./Icons";
 
 export function Modal({
   open,
@@ -39,36 +38,49 @@ export function Modal({
   if (!open) return null;
 
   return (
-    <div
-      className="modal-backdrop"
-      onMouseDown={() => {
-        if (dismissible) onClose();
-      }}
-    >
+    <>
+      <div className="modal-backdrop show" />
       <div
-        className={`modal ${wide ? "modal-wide" : ""}`}
+        className="modal d-block"
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        onMouseDown={(event) => event.stopPropagation()}
+        onMouseDown={() => {
+          if (dismissible) onClose();
+        }}
       >
-        <header className="modal-header">
-          <div>
-            <h2>{title}</h2>
-            {subtitle ? <p>{subtitle}</p> : null}
+        <div
+          className={`modal-dialog modal-dialog-centered modal-dialog-scrollable${
+            wide ? " modal-lg" : ""
+          }`}
+          onMouseDown={(event) => event.stopPropagation()}
+        >
+          <div className="modal-content">
+            <div className="modal-header align-items-start">
+              <div>
+                <h2 className="modal-title fs-5">{title}</h2>
+                {subtitle ? (
+                  <div className="small text-secondary mt-1">{subtitle}</div>
+                ) : null}
+              </div>
+              <button
+                type="button"
+                className="btn-close"
+                onClick={onClose}
+                aria-label="Close"
+                disabled={!dismissible}
+              />
+            </div>
+            <div className="modal-body d-flex flex-column gap-3">
+              {children}
+            </div>
+            {footer ? (
+              <div className="modal-footer flex-wrap gap-2">{footer}</div>
+            ) : null}
           </div>
-          <button
-            className="icon-btn"
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-          >
-            <Icon name="x" />
-          </button>
-        </header>
-        <div className="modal-body">{children}</div>
-        {footer ? <footer className="modal-footer">{footer}</footer> : null}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

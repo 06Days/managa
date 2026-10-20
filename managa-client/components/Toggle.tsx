@@ -12,18 +12,16 @@ export function Toggle({
   label: string;
 }) {
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={label}
-      title={label}
-      className={`switch ${checked ? "switch-on" : ""}`}
-      onClick={() => onChange(!checked)}
-      disabled={disabled}
-    >
-      <span className="switch-knob" />
-      <span className="sr-only">{label}</span>
-    </button>
+    <div className="form-check form-switch mb-0" title={label}>
+      <input
+        className="form-check-input"
+        type="checkbox"
+        role="switch"
+        checked={checked}
+        aria-label={label}
+        disabled={disabled}
+        onChange={(event) => onChange(event.target.checked)}
+      />
+    </div>
   );
 }

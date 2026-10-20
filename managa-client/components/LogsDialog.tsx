@@ -72,20 +72,29 @@ export function LogsDialog({
       wide
       footer={
         <>
-          <span className="mono log-path" title={logPath}>
+          <span
+            className="small font-monospace text-secondary text-truncate me-auto"
+            style={{ maxWidth: "45%" }}
+            title={logPath}
+          >
             {logPath || "—"}
           </span>
-          <span className="spacer" />
-          <label className="checkline">
+          <div className="form-check form-switch mb-0 d-flex align-items-center gap-2">
             <input
+              id="logs-live"
+              className="form-check-input mt-0"
               type="checkbox"
+              role="switch"
               checked={live}
               onChange={(event) => setLive(event.target.checked)}
             />
-            Live
-          </label>
+            <label className="form-check-label" htmlFor="logs-live">
+              Live
+            </label>
+          </div>
           <button
-            className="btn btn-ghost btn-sm"
+            type="button"
+            className="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1"
             onClick={() => void load()}
             disabled={loading}
           >
@@ -96,26 +105,36 @@ export function LogsDialog({
       }
     >
       {available.length > 1 ? (
-        <div className="tabs" role="tablist" aria-label="Component">
+        <ul className="nav nav-pills gap-2" role="tablist" aria-label="Component">
           {available.map((kind) => (
-            <button
-              key={kind}
-              type="button"
-              role="tab"
-              aria-selected={component === kind}
-              className={`tab ${component === kind ? "active" : ""}`}
-              onClick={() => setComponent(kind)}
-            >
-              <Icon name={kind === "server" ? "server" : "monitor"} size={15} />
-              {kind}
-            </button>
+            <li className="nav-item" key={kind}>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={component === kind}
+                className={`nav-link d-inline-flex align-items-center gap-1${
+                  component === kind ? " active" : ""
+                }`}
+                onClick={() => setComponent(kind)}
+              >
+                <Icon
+                  name={kind === "server" ? "server" : "monitor"}
+                  size={15}
+                />
+                <span className="text-capitalize">{kind}</span>
+              </button>
+            </li>
           ))}
+        </ul>
+      ) : null}
+
+      {error ? (
+        <div className="alert alert-danger mb-0" role="alert">
+          {error}
         </div>
       ) : null}
 
-      {error ? <div className="notice notice-error">{error}</div> : null}
-
-      <pre className="log-view">
+      <pre className="log-pre">
         {lines.length > 0
           ? lines.join("\n")
           : loading

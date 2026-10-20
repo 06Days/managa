@@ -2,7 +2,7 @@
   "name": "managa-client",
   "version": "0.1.0",
   "private": true,
-  "description": "managa control panel - a Next.js dashboard for the managa app manager",
+  "description": "managa dashboard - a Next.js UI for managing self-productivity apps",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

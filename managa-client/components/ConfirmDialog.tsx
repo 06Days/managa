@@ -40,20 +40,33 @@ export function ConfirmDialog({
       dismissible={!busy}
       footer={
         <>
-          <button className="btn btn-ghost" onClick={onClose} disabled={busy}>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={onClose}
+            disabled={busy}
+          >
             Cancel
           </button>
           <button
+            type="button"
             className={`btn ${danger ? "btn-danger" : "btn-primary"}`}
             onClick={() => void confirm()}
             disabled={busy}
           >
-            {busy ? "Working…" : confirmLabel}
+            {busy ? (
+              <>
+                <span className="spinner-border spinner-border-sm me-2" />
+                Working…
+              </>
+            ) : (
+              confirmLabel
+            )}
           </button>
         </>
       }
     >
-      <p className="muted">{message}</p>
+      <p className="text-secondary mb-0">{message}</p>
     </Modal>
   );
 }

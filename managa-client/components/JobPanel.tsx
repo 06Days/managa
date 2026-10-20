@@ -13,8 +13,10 @@ export function JobPanel({
   if (!job) return null;
 
   return (
-    <aside className="job-panel" aria-live="polite">
-      <JobProgress job={job} compact onDismiss={onDismiss} />
+    <aside className="job-panel card shadow" aria-live="polite">
+      <div className="card-body p-3">
+        <JobProgress job={job} compact onDismiss={onDismiss} />
+      </div>
     </aside>
   );
 }

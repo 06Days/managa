@@ -58,68 +58,86 @@ export default function DashboardPage() {
   };
 
   const stats = [
-    { label: "Installed", value: apps.length, tone: "neutral" as const },
+    { label: "Installed", value: apps.length, tone: "body" },
     {
       label: "Running",
       value: apps.filter((app) => app.overallStatus === "running").length,
-      tone: "green" as const,
+      tone: "success",
     },
     {
       label: "Enabled",
       value: apps.filter((app) => app.enabled).length,
-      tone: "violet" as const,
+      tone: "info",
     },
     {
       label: "Errors",
       value: apps.filter((app) => app.overallStatus === "error").length,
-      tone: "red" as const,
+      tone: "danger",
     },
   ];
 
   return (
     <>
-      <section className="hero">
-        <div className="hero-copy">
-          <span className="eyebrow">
-            <Icon name="sparkles" size={14} />
-            Self-productivity apps
-          </span>
-          <h1>
-            Your self-productivity apps,{" "}
-            <span className="grad">one home.</span>
-          </h1>
-          <p>
-            Install a compatible client/server bundle from GitHub, flip it on,
-            and managa runs both sides on managed ports with live logs and
-            lifecycle controls.
-          </p>
-        </div>
-        <div className="hero-actions">
-          <button
-            className="btn btn-primary"
-            onClick={() => setInstallOpen(true)}
-          >
-            <Icon name="github" size={17} />
-            Install from GitHub
-          </button>
-          <Link className="btn btn-ghost" href="/catalog">
-            <Icon name="layers" size={17} />
-            Browse catalog
-          </Link>
+      <section className="hero-card border rounded-4 p-4 p-md-5 mb-4">
+        <div className="row g-4 align-items-end">
+          <div className="col-lg-8">
+            <div className="text-uppercase small fw-semibold text-info mb-2 d-inline-flex align-items-center gap-1">
+              <Icon name="sparkles" size={14} />
+              Self-productivity apps
+            </div>
+            <h1 className="display-5 fw-bold mb-3">
+              Your self-productivity apps,{" "}
+              <span className="text-gradient text-nowrap">one home.</span>
+            </h1>
+            <p className="text-secondary mb-0">
+              Install a compatible client/server bundle from GitHub, flip it on,
+              and managa runs both sides on managed ports with live logs and
+              lifecycle controls.
+            </p>
+          </div>
+          <div className="col-lg-4 d-flex flex-wrap gap-2 justify-content-lg-end">
+            <button
+              className="btn btn-primary d-inline-flex align-items-center gap-2"
+              onClick={() => setInstallOpen(true)}
+            >
+              <Icon name="github" size={17} />
+              Install from GitHub
+            </button>
+            <Link
+              className="btn btn-outline-secondary d-inline-flex align-items-center gap-2"
+              href="/catalog"
+            >
+              <Icon name="layers" size={17} />
+              Browse catalog
+            </Link>
+          </div>
         </div>
       </section>
 
-      <section className="stats" aria-label="Overview">
+      <section className="row g-3 mb-4" aria-label="Overview">
         {stats.map((stat) => (
-          <div className={`stat stat-${stat.tone}`} key={stat.label}>
-            <span className="stat-value">{loading && apps.length === 0 ? "—" : stat.value}</span>
-            <span className="stat-label">{stat.label}</span>
+          <div className="col-6 col-lg-3" key={stat.label}>
+            <div className="card h-100">
+              <div className="card-body py-3">
+                <div className={`fs-3 fw-bold text-${stat.tone}`}>
+                  {loading && apps.length === 0 ? "—" : stat.value}
+                </div>
+                <div className="small text-secondary text-uppercase">
+                  {stat.label}
+                </div>
+              </div>
+            </div>
           </div>
         ))}
       </section>
 
       {notice ? (
-        <div className={`notice notice-${notice.type}`}>
+        <div
+          className={`alert alert-${
+            notice.type === "error" ? "danger" : notice.type
+          } alert-dismissible d-flex align-items-center gap-2`}
+          role="alert"
+        >
           <Icon
             name={
               notice.type === "success"
@@ -133,46 +151,49 @@ export default function DashboardPage() {
           <span>{notice.text}</span>
           <button
             type="button"
-            className="icon-btn"
+            className="btn-close"
             onClick={() => setNotice(null)}
             aria-label="Dismiss"
-          >
-            <Icon name="x" size={15} />
-          </button>
+          />
         </div>
       ) : null}
 
       {error && apps.length === 0 ? (
-        <div className="connection-card">
-          <div className="connection-icon">
-            <Icon name="alert" size={24} />
+        <div className="card border-danger mb-4">
+          <div className="card-body d-flex flex-wrap align-items-center gap-3">
+            <span className="job-state text-bg-danger">
+              <Icon name="alert" size={22} />
+            </span>
+            <div className="flex-grow-1">
+              <h2 className="h5 mb-1">managa server offline</h2>
+              <p className="mb-1">{error}</p>
+              <p className="small text-secondary mb-0">
+                Start it with <code>npm run dev:server</code> from the
+                repository root, then retry.
+              </p>
+            </div>
+            <button
+              className="btn btn-outline-secondary d-inline-flex align-items-center gap-2"
+              onClick={() => void refresh()}
+            >
+              <Icon name="refresh" size={16} />
+              Retry
+            </button>
           </div>
-          <div>
-            <h2>managa server offline</h2>
-            <p>{error}</p>
-            <p className="muted">
-              Start it with <code>npm run dev:server</code> from the repository
-              root, then retry.
-            </p>
-          </div>
-          <button className="btn btn-ghost" onClick={() => void refresh()}>
-            <Icon name="refresh" size={16} />
-            Retry
-          </button>
         </div>
       ) : null}
 
-      <section className="section">
-        <div className="section-head">
+      <section>
+        <div className="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-3">
           <div>
-            <h2>Installed apps</h2>
-            <p className="muted">
+            <h2 className="h3 mb-1">Installed apps</h2>
+            <p className="text-secondary mb-0">
               Cards are generated from the managa registry. Toggle an app to
               start or stop its client and server together.
             </p>
           </div>
           <button
-            className="btn btn-ghost btn-sm"
+            className="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1"
             onClick={() => void refresh()}
             title="Refresh apps"
           >
@@ -182,13 +203,23 @@ export default function DashboardPage() {
         </div>
 
         {loading && apps.length === 0 ? (
-          <div className="app-grid">
+          <div className="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3">
             {[0, 1, 2].map((index) => (
-              <div className="app-card skeleton-card" key={index}>
-                <span className="skeleton skeleton-title" />
-                <span className="skeleton skeleton-line" />
-                <span className="skeleton skeleton-line short" />
-                <span className="skeleton skeleton-block" />
+              <div className="col" key={index}>
+                <div className="card h-100">
+                  <div className="card-body">
+                    <h5 className="placeholder-glow">
+                      <span className="placeholder col-6" />
+                    </h5>
+                    <p className="placeholder-glow mb-2">
+                      <span className="placeholder col-12" />
+                      <span className="placeholder col-8" />
+                    </p>
+                    <p className="placeholder-glow mb-0">
+                      <span className="placeholder col-12" />
+                    </p>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -197,50 +228,55 @@ export default function DashboardPage() {
             title="No apps installed yet"
             message="Install your first compatible app from GitHub, or restore the bundled Taska app from the catalog."
             action={
-              <div className="empty-actions">
+              <>
                 <button
-                  className="btn btn-primary"
+                  className="btn btn-primary d-inline-flex align-items-center gap-2"
                   onClick={() => setInstallOpen(true)}
                 >
                   <Icon name="github" size={17} />
                   Install from GitHub
                 </button>
-                <Link className="btn btn-ghost" href="/catalog">
+                <Link className="btn btn-outline-secondary" href="/catalog">
                   Open catalog
                 </Link>
-              </div>
+              </>
             }
           />
         ) : (
-          <div className="app-grid">
+          <div className="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3">
             {apps.map((app) => (
-              <AppCard
-                key={app.id}
-                app={app}
-                busy={busyId === app.id}
-                onToggle={(target, enabled) =>
-                  void run(() => api.toggle(target.id, enabled))
-                }
-                onLogs={(target) => {
-                  setLogsComponent(target.server ? "server" : "client");
-                  setLogsApp(target);
-                }}
-                onUninstall={setConfirmApp}
-              />
+              <div className="col" key={app.id}>
+                <AppCard
+                  app={app}
+                  busy={busyId === app.id}
+                  onToggle={(target, enabled) =>
+                    void run(() => api.toggle(target.id, enabled))
+                  }
+                  onLogs={(target) => {
+                    setLogsComponent(target.server ? "server" : "client");
+                    setLogsApp(target);
+                  }}
+                  onUninstall={setConfirmApp}
+                />
+              </div>
             ))}
-            <button
-              type="button"
-              className="app-card add-card"
-              onClick={() => setInstallOpen(true)}
-            >
-              <span className="add-icon">
-                <Icon name="plus" size={24} />
-              </span>
-              <strong>Add an app</strong>
-              <span className="muted">
-                Install a compatible bundle from GitHub
-              </span>
-            </button>
+            <div className="col">
+              <button
+                type="button"
+                className="card h-100 w-100 add-card text-center"
+                onClick={() => setInstallOpen(true)}
+              >
+                <span className="card-body d-flex flex-column align-items-center justify-content-center gap-2">
+                  <span className="add-icon">
+                    <Icon name="plus" size={24} />
+                  </span>
+                  <strong>Add an app</strong>
+                  <span className="small">
+                    Install a compatible bundle from GitHub
+                  </span>
+                </span>
+              </button>
+            </div>
           </div>
         )}
       </section>
