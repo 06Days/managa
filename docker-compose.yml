@@ -5,7 +5,7 @@ services:
       dockerfile: managa-server/Dockerfile
     ports:
       - "5100:5100"
-      - "3100-4199:3100-4199"
+      - "3100-4399:3100-4399"
     environment:
       - PORT=5100
       - MANAGA_ROOT_DIR=/app

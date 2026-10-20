@@ -10,6 +10,7 @@ import * as path from 'path';
  *     managa-server/   <- process.cwd() when `npm run start:dev`
  *     managa-client/
  *     taska.app.json
+ *     quita.app.json
  *     data/
  */
 @Injectable()

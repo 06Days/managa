@@ -8,6 +8,15 @@
       "icon": "✅",
       "tags": ["bundled", "productivity", "reference"],
       "builtin": true
+    },
+    {
+      "id": "quita",
+      "name": "Quita",
+      "description": "Track addictions and relapses, answer your own reflection questions, and grow a city with every clean day. Bundled with Managá.",
+      "version": "0.1.0",
+      "icon": "🌱",
+      "tags": ["bundled", "wellbeing", "recovery", "habits"],
+      "builtin": true
     }
   ]
 }

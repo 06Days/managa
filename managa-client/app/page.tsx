@@ -226,7 +226,7 @@ export default function DashboardPage() {
         ) : apps.length === 0 ? (
           <EmptyState
             title="No apps installed yet"
-            message="Install your first compatible app from GitHub, or restore the bundled Taska app from the catalog."
+            message="Install your first compatible app from GitHub, or restore a bundled app from the catalog."
             action={
               <>
                 <button

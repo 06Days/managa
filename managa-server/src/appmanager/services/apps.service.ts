@@ -582,7 +582,13 @@ export class AppsService
           component.install,
           {
             cwd,
-            env,
+            // The managa server runs with NODE_ENV=production in Docker.
+            // Install commands still need the dev dependencies that builds use.
+            env: {
+              ...env,
+              NODE_ENV: 'development',
+              NPM_CONFIG_INCLUDE: 'dev',
+            },
             timeoutMs: 20 * 60 * 1000,
             onLine: (line) => this.jobs.log(job, line),
           },
@@ -641,7 +647,7 @@ export class AppsService
     const configured =
       process.env.MANAGA_BUILTIN_MANIFESTS?.split(',')
         .map((entry) => entry.trim())
-        .filter(Boolean) ?? ['taska.app.json'];
+        .filter(Boolean) ?? ['taska.app.json', 'quita.app.json'];
 
     for (const relativePath of configured) {
       const manifestFile = path.resolve(this.paths.rootDir, relativePath);

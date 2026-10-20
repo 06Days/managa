@@ -8,8 +8,14 @@ one, and gives you a single switch to start or stop both sides. Each app runs as
 its own process on allocated ports, with its own logs, data directory and health
 checks.
 
-The repository ships with **Taska** — the included sample task-list app — as the
-reference compatible app.
+The repository ships with two bundled apps:
+
+- **Taska** — the reference task-list app.
+- **Quita** — an addiction and relapse tracker where a city grows with every
+  clean day.
+
+Both are compatible apps that install, start, stop and uninstall through the
+same managa lifecycle as anything pulled from GitHub.
 
 ```
 ┌──────────────────────────────┐        ┌─────────────────────────────────┐
@@ -18,9 +24,10 @@ reference compatible app.
 └──────────────────────────────┘        └──────────────┬──────────────────┘
                                                        │ spawns and supervises
                                     ┌──────────────────┴──────────────────┐
-                                    │  Taska client :3100  +  Taska API :4100 │
-                                    │  (or any installed compatible app)      │
-                                    └─────────────────────────────────────────┘
+                                    │  Taska :3100 + API :4100            │
+                                    │  Quita :3200 + API :4200            │
+                                    │  (or any installed compatible app)  │
+                                    └─────────────────────────────────────┘
 ```
 
 ## Quick start
@@ -40,13 +47,28 @@ Open **http://localhost:3000**.
 | managa server API | http://localhost:5100 |
 | Swagger docs | http://localhost:5100/docs |
 
-Taska is registered automatically on first boot. Flip its switch on the
-dashboard. On the first start managa builds both components, then launches the
-API on `:4100` and the client on `:3100`. Click **Open**.
+Taska and Quita are registered automatically on first boot. Flip either switch
+on the dashboard. On the first start managa builds both components of that app,
+then launches the API and client on their allocated ports. Click **Open**.
 
-> First `npm run dev` only installs the two managa packages. Taska's own
-> dependencies are installed and built the first time you toggle it on, which
-> keeps the platform checkout small.
+> First `npm run dev` only installs the two managa packages. Each bundled app's
+> own dependencies are installed and built the first time you toggle it on,
+> which keeps the platform checkout small.
+
+### Bundled apps
+
+**Taska** is the reference productivity app: task lists, tasks, due dates and an
+edit mode. It shows the smallest possible client + server manifest.
+
+**Quita** is a wellbeing app for quitting addictions. You can:
+
+- create, edit and delete addictions and relapses;
+- attach your own questions to each addiction and answer them when logging a
+  relapse;
+- see the clean time before every relapse in the history;
+- watch a Bootstrap city skyline grow with the time since the last relapse.
+  New blocks, floors, lights and landmarks unlock at milestones, and a relapse
+  starts a fresh city while keeping your best streak and full history.
 
 ### Run production builds
 
@@ -79,6 +101,9 @@ managa/
 ├── client/taska-client/      bundled Taska client (sample compatible app)
 ├── server/taska-server/      bundled Taska server (sample compatible app)
 ├── taska.app.json            Taska's managa manifest
+├── client/quita-client/      bundled Quita client (addiction recovery tracker)
+├── server/quita-server/      bundled Quita API
+├── quita.app.json            Quita's managa manifest
 ├── data/                     runtime state (gitignored)
 └── scripts/stack.mjs         runs both managa packages
 ```
@@ -120,6 +145,10 @@ git@github.com:owner/repo.git
 
 Install, build and start commands are defined by the app manifest. **Installing
 an app runs code from that repository** — only install apps you trust.
+
+Install commands run with `NODE_ENV=development` and npm's `include=dev` flag so
+build-time dependencies are present even when managa itself runs with
+`NODE_ENV=production` in Docker. Start commands inherit managa's environment.
 
 Set `MANAGA_ALLOW_GIT=false` to disable GitHub installs entirely. Private
 repositories work through your normal git credential helper.
@@ -262,7 +291,7 @@ immediately. Poll the job for progress and logs.
 | `MANAGA_DATA_DIR` | `<root>/data` | Registry, clones, logs, app data |
 | `MANAGA_PUBLIC_HOST` | `http://localhost` | Host used in app URLs |
 | `AUTO_START` | `true` | Restart enabled apps when managa-server boots |
-| `MANAGA_BUILTIN_MANIFESTS` | `taska.app.json` | Comma-separated bundled manifests |
+| `MANAGA_BUILTIN_MANIFESTS` | `taska.app.json,quita.app.json` | Comma-separated bundled manifests |
 | `MANAGA_CATALOG_URL` | — | Optional remote catalog JSON |
 | `MANAGA_ALLOW_GIT` | `true` | Set `false` to disable GitHub installs |
 | `MANAGA_ALLOW_LOCAL_SOURCES` | `false` | Dev-only: allow local path/`file://` git sources |
@@ -291,8 +320,10 @@ docker compose up --build
 ```
 
 The server image includes git and build tools because installed apps run inside
-the container. Managed app ports `3100–4199` are published, and `data/` is a
-volume. The dashboard is available on `:3000` and the API on `:5100`.
+the container. Managed app ports `3100–4399` are published, and `data/` is a
+volume. The dashboard is available on `:3000` and the API on `:5100`. The image
+ships both bundled apps, so Quita is available from the catalog on a fresh
+Docker install.
 
 ## Security and limitations
 

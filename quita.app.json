@@ -1,0 +1,36 @@
+{
+  "$schema": "./managa-server/schema/app-manifest.schema.json",
+  "id": "quita",
+  "name": "Quita",
+  "description": "Track addictions and relapses, answer your own reflection questions, and grow a city with every clean day. Bundled as a Managá self-productivity app.",
+  "version": "0.1.0",
+  "author": "Toby Cammock-Elliott",
+  "icon": "🌱",
+  "tags": ["bundled", "wellbeing", "recovery", "habits"],
+  "client": {
+    "dir": "client/quita-client",
+    "port": 3200,
+    "install": "npm ci --no-audit --no-fund",
+    "build": "npm run build",
+    "buildOutput": ".next",
+    "start": "npm run start",
+    "healthPath": "/",
+    "readyTimeoutMs": 60000,
+    "env": {
+      "NEXT_PUBLIC_API_URL": "{{serverUrl}}"
+    }
+  },
+  "server": {
+    "dir": "server/quita-server",
+    "port": 4200,
+    "install": "npm ci --no-audit --no-fund",
+    "build": "npm run build",
+    "buildOutput": "dist",
+    "start": "npm run start:prod",
+    "healthPath": "/health",
+    "readyTimeoutMs": 45000,
+    "env": {
+      "DATABASE_PATH": "{{appDataDir}}/quita.sqlite"
+    }
+  }
+}
