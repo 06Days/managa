@@ -573,21 +573,34 @@ export class AppsService
         .update(JSON.stringify(env))
         .digest('hex');
 
-      if (
-        component.install &&
-        !fsSync.existsSync(path.join(cwd, 'node_modules'))
-      ) {
+      // The managa server runs with NODE_ENV=production in Docker. Install
+      // commands still need the dev dependencies that builds use. Re-run the
+      // install once for node_modules created before this marker existed.
+      const installEnv = {
+        ...env,
+        NODE_ENV: 'development',
+        NPM_CONFIG_INCLUDE: 'dev',
+      };
+      const installEnvHash = 'dev-dependencies-v1';
+      const hasNodeModules = fsSync.existsSync(path.join(cwd, 'node_modules'));
+      const needsInstall =
+        Boolean(component.install) &&
+        (!hasNodeModules || state.installEnvHash !== installEnvHash);
+
+      if (needsInstall) {
         this.jobs.progress(job, 45, `Installing ${kind} dependencies`);
         await this.commands.run(
-          component.install,
+          component.install!,
           {
             cwd,
-            env,
+            env: installEnv,
             timeoutMs: 20 * 60 * 1000,
             onLine: (line) => this.jobs.log(job, line),
           },
           kind,
         );
+        state.installEnvHash = installEnvHash;
+        await this.registry.set(app);
       }
 
       if (component.build) {

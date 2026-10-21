@@ -65,6 +65,8 @@ export interface ComponentState {
   lastError?: string;
   /** Hash of the resolved environment used for the last build. */
   buildEnvHash?: string;
+  /** Marker for the dependency install environment. */
+  installEnvHash?: string;
   preparedAt?: string;
 }
 
