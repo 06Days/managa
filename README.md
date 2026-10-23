@@ -349,6 +349,9 @@ the stack:
 ./scripts/auto-update.sh
 ```
 
+It exits without rebuilding when the commit has not changed. To force a
+rebuild, run `MANAGA_FORCE_UPDATE=1 ./scripts/auto-update.sh`.
+
 Example cron entry (hourly at :15):
 
 ```cron

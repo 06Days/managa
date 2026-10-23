@@ -25,6 +25,8 @@ if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   exit 1
 fi
 
+before=$(git rev-parse HEAD)
+
 log "fetching origin/$BRANCH"
 git fetch --prune origin "$BRANCH"
 
@@ -39,6 +41,14 @@ else
     log "rebase failed; leaving the checkout untouched"
     exit 1
   fi
+fi
+
+after=$(git rev-parse HEAD)
+if [ "$before" = "$after" ] \
+  && [ -z "$(git status --porcelain)" ] \
+  && [ "${MANAGA_FORCE_UPDATE:-0}" != "1" ]; then
+  log "already at $after; nothing to rebuild"
+  exit 0
 fi
 
 if docker compose version >/dev/null 2>&1; then
