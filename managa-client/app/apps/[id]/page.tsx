@@ -13,12 +13,14 @@ import { useJob } from "@/hooks/useJob";
 import { api } from "@/lib/api";
 import { timeAgo } from "@/lib/format";
 import { AppComponentView, AppView, ComponentKind, Job } from "@/lib/types";
+import { resolveAppUrl } from "@/lib/urls";
 
 export default function AppDetailPage() {
   const params = useParams<{ id: string }>();
   const id = String(params.id);
 
   const [app, setApp] = useState<AppView | null>(null);
+  const [browserHostname, setBrowserHostname] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -45,12 +47,16 @@ export default function AppDetailPage() {
     return () => clearInterval(timer);
   }, [load]);
 
+  useEffect(() => {
+    setBrowserHostname(window.location.hostname);
+  }, []);
+
   const { job, track, clear } = useJob((finished) => {
     void load();
     setNotice(
       finished.status === "succeeded"
         ? finished.message
-        : finished.error ?? finished.message,
+        : (finished.error ?? finished.message),
     );
   });
 
@@ -104,6 +110,7 @@ export default function AppDetailPage() {
   const components = [app.server, app.client].filter(
     (component): component is AppComponentView => Boolean(component),
   );
+  const openUrl = resolveAppUrl(app.openUrl, browserHostname);
 
   return (
     <>
@@ -174,10 +181,10 @@ export default function AppDetailPage() {
       ) : null}
 
       <div className="d-flex flex-wrap align-items-center gap-2 mb-4">
-        {app.openUrl && app.overallStatus !== "stopped" ? (
+        {openUrl && app.overallStatus !== "stopped" ? (
           <a
             className="btn btn-primary d-inline-flex align-items-center gap-1"
-            href={app.openUrl}
+            href={openUrl}
             target="_blank"
             rel="noreferrer"
           >
@@ -185,7 +192,10 @@ export default function AppDetailPage() {
             Open app
           </a>
         ) : (
-          <button className="btn btn-primary d-inline-flex align-items-center gap-1" disabled>
+          <button
+            className="btn btn-primary d-inline-flex align-items-center gap-1"
+            disabled
+          >
             <Icon name="external" size={16} />
             Open app
           </button>
@@ -226,93 +236,99 @@ export default function AppDetailPage() {
       </div>
 
       <section className="row row-cols-1 row-cols-lg-2 g-3 mb-4">
-        {components.map((component) => (
-          <div className="col" key={component.kind}>
-            <article className="card h-100">
-              <div className="card-body d-flex flex-column gap-3">
-                <div className="d-flex align-items-center gap-3">
-                  <span className="app-icon">
-                    <Icon
-                      name={component.kind === "server" ? "server" : "monitor"}
-                      size={20}
-                    />
-                  </span>
-                  <div className="flex-grow-1 min-w-0">
-                    <h2 className="h6 text-capitalize mb-0">
-                      {component.kind}
-                    </h2>
-                    <span className="small font-monospace text-secondary text-break">
-                      {component.dir}
+        {components.map((component) => {
+          const componentUrl =
+            resolveAppUrl(component.url, browserHostname) ?? component.url;
+          return (
+            <div className="col" key={component.kind}>
+              <article className="card h-100">
+                <div className="card-body d-flex flex-column gap-3">
+                  <div className="d-flex align-items-center gap-3">
+                    <span className="app-icon">
+                      <Icon
+                        name={
+                          component.kind === "server" ? "server" : "monitor"
+                        }
+                        size={20}
+                      />
                     </span>
+                    <div className="flex-grow-1 min-w-0">
+                      <h2 className="h6 text-capitalize mb-0">
+                        {component.kind}
+                      </h2>
+                      <span className="small font-monospace text-secondary text-break">
+                        {component.dir}
+                      </span>
+                    </div>
+                    <StatusPill status={component.status} small />
                   </div>
-                  <StatusPill status={component.status} small />
+
+                  <dl className="row row-cols-2 g-3 small mb-0">
+                    <div className="col">
+                      <dt className="text-secondary fw-normal">Port</dt>
+                      <dd className="font-monospace mb-0">{component.port}</dd>
+                    </div>
+                    <div className="col">
+                      <dt className="text-secondary fw-normal">PID</dt>
+                      <dd className="font-monospace mb-0">
+                        {component.pid ?? "—"}
+                      </dd>
+                    </div>
+                    <div className="col">
+                      <dt className="text-secondary fw-normal">URL</dt>
+                      <dd className="mb-0">
+                        <a
+                          className="font-monospace link-info text-decoration-none text-break"
+                          href={componentUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {componentUrl.replace(/^https?:\/\//, "")}
+                        </a>
+                      </dd>
+                    </div>
+                    <div className="col">
+                      <dt className="text-secondary fw-normal">Started</dt>
+                      <dd className="mb-0">{timeAgo(component.startedAt)}</dd>
+                    </div>
+                  </dl>
+
+                  <div className="bg-body-tertiary border rounded-2 p-2 d-flex gap-2 small overflow-auto">
+                    <span className="text-secondary">start</span>
+                    <code className="text-body text-break">
+                      {component.startCommand}
+                    </code>
+                  </div>
+
+                  {component.lastError ? (
+                    <div className="alert alert-danger small mb-0" role="alert">
+                      {component.lastError}
+                    </div>
+                  ) : null}
+
+                  <div className="d-flex flex-wrap gap-2 mt-auto">
+                    <button
+                      className="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1"
+                      onClick={() => setLogs({ component: component.kind })}
+                    >
+                      <Icon name="terminal" size={15} />
+                      View logs
+                    </button>
+                    <a
+                      className="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1"
+                      href={componentUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <Icon name="external" size={15} />
+                      Open
+                    </a>
+                  </div>
                 </div>
-
-                <dl className="row row-cols-2 g-3 small mb-0">
-                  <div className="col">
-                    <dt className="text-secondary fw-normal">Port</dt>
-                    <dd className="font-monospace mb-0">{component.port}</dd>
-                  </div>
-                  <div className="col">
-                    <dt className="text-secondary fw-normal">PID</dt>
-                    <dd className="font-monospace mb-0">
-                      {component.pid ?? "—"}
-                    </dd>
-                  </div>
-                  <div className="col">
-                    <dt className="text-secondary fw-normal">URL</dt>
-                    <dd className="mb-0">
-                      <a
-                        className="font-monospace link-info text-decoration-none text-break"
-                        href={component.url}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        {component.url.replace(/^https?:\/\//, "")}
-                      </a>
-                    </dd>
-                  </div>
-                  <div className="col">
-                    <dt className="text-secondary fw-normal">Started</dt>
-                    <dd className="mb-0">{timeAgo(component.startedAt)}</dd>
-                  </div>
-                </dl>
-
-                <div className="bg-body-tertiary border rounded-2 p-2 d-flex gap-2 small overflow-auto">
-                  <span className="text-secondary">start</span>
-                  <code className="text-body text-break">
-                    {component.startCommand}
-                  </code>
-                </div>
-
-                {component.lastError ? (
-                  <div className="alert alert-danger small mb-0" role="alert">
-                    {component.lastError}
-                  </div>
-                ) : null}
-
-                <div className="d-flex flex-wrap gap-2 mt-auto">
-                  <button
-                    className="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1"
-                    onClick={() => setLogs({ component: component.kind })}
-                  >
-                    <Icon name="terminal" size={15} />
-                    View logs
-                  </button>
-                  <a
-                    className="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1"
-                    href={component.url}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <Icon name="external" size={15} />
-                    Open
-                  </a>
-                </div>
-              </div>
-            </article>
-          </div>
-        ))}
+              </article>
+            </div>
+          );
+        })}
       </section>
 
       <div className="row">

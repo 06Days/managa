@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { AppComponentView, AppView, OverallStatus } from "@/lib/types";
+import { resolveAppUrl } from "@/lib/urls";
 import { Icon } from "./Icons";
 import { StatusPill } from "./StatusPill";
 import { Toggle } from "./Toggle";
@@ -51,7 +53,13 @@ export function AppCard({
   onLogs: (app: AppView) => void;
   onUninstall: (app: AppView) => void;
 }) {
-  const canOpen = Boolean(app.openUrl) && !busy;
+  const [browserHostname, setBrowserHostname] = useState<string | null>(null);
+  useEffect(() => {
+    setBrowserHostname(window.location.hostname);
+  }, []);
+
+  const openUrl = resolveAppUrl(app.openUrl, browserHostname);
+  const canOpen = Boolean(openUrl) && !busy;
   const sourceLabel = app.source.type === "github" ? "GitHub" : "Bundled";
 
   return (
@@ -97,7 +105,7 @@ export function AppCard({
           {canOpen ? (
             <a
               className="btn btn-primary btn-sm"
-              href={app.openUrl}
+              href={openUrl}
               target="_blank"
               rel="noreferrer"
             >

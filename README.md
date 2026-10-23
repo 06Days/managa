@@ -323,6 +323,40 @@ docker compose up --build -d
 Docker host networking requires a Linux host (including Raspberry Pi OS). For
 local development on macOS or Windows, use `npm run dev` instead.
 
+### Remote access over LAN or Tailscale
+
+Open the dashboard using the Pi's hostname, LAN IP or Tailscale IP:
+
+```text
+http://100.96.33.106:3000
+```
+
+The dashboard rewrites app links that point at `localhost`/`127.0.0.1` to the
+hostname used in the browser. Bundled Taska also proxies its API through
+same-origin `/task-lists` requests, so the browser never calls the Taska API
+host or port directly.
+
+`MANAGA_PUBLIC_HOST` is still used for app-to-app environment values. Set it if
+an installed app calls its API directly from browser code, or if you want the
+dashboard and app links to always use one specific address.
+
+### Auto-update
+
+`scripts/auto-update.sh` pulls `origin/main`, rebuilds the images and restarts
+the stack:
+
+```bash
+./scripts/auto-update.sh
+```
+
+Example cron entry (hourly at :15):
+
+```cron
+15 * * * * /path/to/managa/scripts/auto-update.sh >> /path/to/managa-update.log 2>&1
+```
+
+The script leaves `data/`, the Docker volume and an untracked `.env` alone.
+
 ### Raspberry Pi and ARM hosts
 
 The server image is pinned to `node:22-alpine3.22` and retries `apk` package

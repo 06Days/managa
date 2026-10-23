@@ -1,12 +1,12 @@
 import type { NextConfig } from "next";
 
-// When managa runs Taska it injects TASKA_API_URL (and NEXT_PUBLIC_API_URL)
-// with the allocated API port. The rewrites let the browser use same-origin
-// /task-lists requests, so the client does not need to know the port at build
-// time. Without managa, fall back to the original local development port.
+// When managa runs Taska it injects TASKA_API_URL with the allocated API port.
+// The rewrites let the browser use same-origin /task-lists requests, so the
+// browser never needs to know the internal API host or port. Without managa,
+// fall back to the original local development port.
 const apiTarget = (
-  process.env.TASKA_API_URL ??
-  process.env.NEXT_PUBLIC_API_URL ??
+  process.env.TASKA_API_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
   "http://localhost:4000"
 ).replace(/\/+$/, "");
 

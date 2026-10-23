@@ -8,9 +8,9 @@ import Navbar from "@/app/taska/components/navbar";
 import TaskCard from "@/app/taska/components/TaskCard";
 import AddTasklistModal from "@/app/taska/components/AddTasklistModal"; // Adjust path if needed
 
-// managa builds this app with NEXT_PUBLIC_API_URL set to the allocated Taska
-// API port. When it is absent the client uses same-origin requests, which are
-// proxied to the API by the rewrites in next.config.ts.
+// managa builds this app with TASKA_API_URL set to the internal API port,
+// which next.config.ts proxies through same-origin requests. Without managa
+// the fallback rewrites still target the local development API.
 const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? '').replace(/\/+$/, '');
 const api = (path: string) => `${API_URL}${path}`;
 
