@@ -39,6 +39,7 @@ Open **http://localhost:3000**.
 | managa dashboard | http://localhost:3000 |
 | managa server API | http://localhost:5100 |
 | Swagger docs | http://localhost:5100/docs |
+| MCP endpoint | http://localhost:5100/mcp |
 
 Taska is registered automatically on first boot. Flip its switch on the
 dashboard. On the first start managa builds both components, then launches the
@@ -69,6 +70,7 @@ npm run dev:client
 managa/
 ├── managa-server/            NestJS app server
 │   ├── src/appmanager/       registry, manifests, jobs, processes, GitHub
+│   ├── src/mcp/              MCP server over Streamable HTTP
 │   ├── catalog.json          bundled / curated catalog
 │   └── schema/               JSON Schema for app manifests
 ├── managa-client/            Next.js dashboard
@@ -228,7 +230,8 @@ a local SVG at `managa-client/public/favicon.svg`.
 
 ## API
 
-All endpoints are under `/appmanager`. Swagger is at `/docs`.
+REST endpoints are under `/appmanager`; the MCP endpoint is at `/mcp`.
+Swagger is at `/docs`.
 
 | Method | Path | Description |
 | --- | --- | --- |
@@ -244,11 +247,69 @@ All endpoints are under `/appmanager`. Swagger is at `/docs`.
 | `GET` | `/appmanager/jobs/:id` | Poll a job (progress + streamed output) |
 | `GET` | `/appmanager/catalog` | Bundled + remote catalog |
 | `POST` | `/appmanager/builtins/:id/install` | Restore an uninstalled bundled app |
+| `POST` | `/mcp` | MCP Streamable HTTP endpoint |
 | `GET` | `/` | managa server info + summary |
 | `GET` | `/health` | Health probe |
 
 Long-running actions (install, start, stop, uninstall, rebuild) return a job
 immediately. Poll the job for progress and logs.
+
+## MCP server
+
+managa-server includes a [Model Context Protocol](https://modelcontextprotocol.io/)
+server at `/mcp` using the Streamable HTTP transport. It lets MCP-capable
+assistants inspect and manage apps without going through the dashboard.
+
+| Tool | Purpose |
+| --- | --- |
+| `list_apps`, `get_app` | Read installed apps, ports, URLs and runtime state |
+| `get_app_logs` | Tail a client or server log |
+| `list_jobs`, `get_job` | Follow install, start, stop and uninstall jobs |
+| `get_catalog` | Browse bundled and remote catalog entries |
+| `install_app` | Install a compatible app from GitHub |
+| `start_app`, `stop_app` | Control an app |
+| `rebuild_app` | Rebuild a stopped app |
+| `uninstall_app` | Stop and uninstall, optionally purging app data |
+| `restore_builtin_app` | Restore an uninstalled bundled app |
+
+Actions that take time return a job immediately. The assistant should poll
+`get_job` until the job succeeds or fails.
+
+Connect any Streamable HTTP MCP client. For example:
+
+```bash
+# Claude Code
+claude mcp add --transport http managa http://100.96.33.106:5100/mcp
+
+# OpenCode
+opencode mcp add managa --url http://100.96.33.106:5100/mcp
+```
+
+To require a bearer token, set `MANAGA_MCP_TOKEN` before starting managa-server
+(or pass it through `compose.yaml` via the Pi's `.env`) and configure the
+client's `Authorization` header. OpenCode V2 configuration example:
+
+```jsonc
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "servers": {
+      "managa": {
+        "type": "remote",
+        "url": "http://100.96.33.106:5100/mcp",
+        "oauth": false,
+        "headers": {
+          "Authorization": "Bearer {env:MANAGA_MCP_TOKEN}"
+        }
+      }
+    }
+  }
+}
+```
+
+`MANAGA_MCP_TOKEN` protects only `/mcp`. The dashboard and REST API remain
+unauthenticated, so keep managa on localhost or a trusted private network such
+as Tailscale.
 
 ## Configuration
 
@@ -266,6 +327,7 @@ immediately. Poll the job for progress and logs.
 | `MANAGA_CATALOG_URL` | — | Optional remote catalog JSON |
 | `MANAGA_ALLOW_GIT` | `true` | Set `false` to disable GitHub installs |
 | `MANAGA_ALLOW_LOCAL_SOURCES` | `false` | Dev-only: allow local path/`file://` git sources |
+| `MANAGA_MCP_TOKEN` | — | Optional bearer token required by `/mcp` |
 
 The dashboard reads `NEXT_PUBLIC_MANAGA_API_URL`; when unset it uses
 `<current-host>:5100`. See `managa-client/.env.local.example`.
@@ -299,8 +361,9 @@ publishing the entire managed port range up front. That creates one
 such as a Raspberry Pi. Host networking avoids that and exposes only the ports
 that running apps actually use.
 
-The dashboard is available on `:3000`, the API on `:5100`, and each running app
-on its allocated port. `data/` is a Docker volume.
+The dashboard is available on `:3000`, the API on `:5100`, the MCP endpoint on
+`:5100/mcp`, and each running app on its allocated port. `data/` is a Docker
+volume.
 
 `MANAGA_PUBLIC_HOST` must be the address you use to reach the host. It is used
 for the **Open** links and baked into app client builds as the API URL. If you
@@ -330,6 +393,8 @@ Open the dashboard using the Pi's hostname, LAN IP or Tailscale IP:
 ```text
 http://100.96.33.106:3000
 ```
+
+The MCP endpoint is `http://100.96.33.106:5100/mcp`.
 
 The dashboard rewrites app links that point at `localhost`/`127.0.0.1` to the
 hostname used in the browser. Bundled Taska also proxies its API through
@@ -385,8 +450,10 @@ docker build --network=host -f managa-server/Dockerfile .
 
 - App manifests are executable configuration. Install/build/start commands run
   with the managa user's permissions.
-- managa-server has no authentication. Run it on localhost or put it behind
-  an authenticated reverse proxy before exposing it.
+- managa-server's REST API has no authentication. MCP can optionally require a
+  bearer token with `MANAGA_MCP_TOKEN`, but that does not protect the dashboard
+  or REST API. Run managa on localhost or a trusted private network such as
+  Tailscale, or put it behind an authenticated reverse proxy before exposing it.
 - GitHub-only installs are enforced (`github.com`); local paths and arbitrary
   git hosts are rejected. `git clone` is invoked with an argument array, never a
   shell string.

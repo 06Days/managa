@@ -24,6 +24,7 @@ export class AppService {
         install: '/appmanager/apps/install',
         catalog: '/appmanager/catalog',
         jobs: '/appmanager/jobs',
+        mcp: '/mcp',
       },
       summary: this.apps.getSummary(),
     };

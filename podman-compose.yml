@@ -13,6 +13,7 @@ services:
       - MANAGA_DATA_DIR=/app/data
       - AUTO_START=true
       - MANAGA_PUBLIC_HOST=${MANAGA_PUBLIC_HOST:-http://localhost}
+      - MANAGA_MCP_TOKEN=${MANAGA_MCP_TOKEN:-}
     volumes:
       - managa_data:/app/data
     restart: unless-stopped

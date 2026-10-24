@@ -44,6 +44,7 @@ async function bootstrap() {
   const logger = new Logger('Bootstrap');
   logger.log(`managa server: http://localhost:${port}`);
   logger.log(`API docs: http://localhost:${port}/docs`);
+  logger.log(`MCP endpoint: http://localhost:${port}/mcp`);
 }
 
 void bootstrap();
