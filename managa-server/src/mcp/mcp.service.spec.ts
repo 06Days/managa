@@ -3,6 +3,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { AppsService } from '../appmanager/services/apps.service';
 import type { AppView, Job } from '../appmanager/types';
+import { AppMcpGateway } from './app-mcp.gateway';
 import { McpService } from './mcp.service';
 
 type AppsStub = Pick<
@@ -50,9 +51,18 @@ const job: Job = {
   createdAt: new Date().toISOString(),
 };
 
+function gatewayStub(
+  modules: Awaited<ReturnType<AppMcpGateway['registerTools']>> = [],
+): AppMcpGateway {
+  return {
+    registerTools: jest.fn(async () => modules),
+  } as unknown as AppMcpGateway;
+}
+
 async function connect(service: McpService) {
-  const server = service.createServer();
-  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  const server = await service.createServer();
+  const [clientTransport, serverTransport] =
+    InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport);
 
   const client = new Client({ name: 'managa-mcp-test', version: '1.0.0' });
@@ -68,7 +78,9 @@ describe('McpService', () => {
       overallStatus: 'running',
     } as AppView;
     const apps = appsStub({ getApps: jest.fn(() => [app]) });
-    const { client, server } = await connect(new McpService(apps));
+    const { client, server } = await connect(
+      new McpService(apps, gatewayStub()),
+    );
 
     try {
       const { tools } = await client.listTools();
@@ -86,6 +98,7 @@ describe('McpService', () => {
           'rebuild_app',
           'uninstall_app',
           'restore_builtin_app',
+          'list_mcp_modules',
         ]),
       );
 
@@ -101,10 +114,41 @@ describe('McpService', () => {
     }
   });
 
+  it('reports app-owned MCP modules through list_mcp_modules', async () => {
+    const modules = [
+      {
+        appId: 'taska',
+        appName: 'Taska',
+        namespace: 'taska',
+        component: 'server' as const,
+        path: '/mcp',
+        status: 'running' as const,
+        available: true,
+        toolCount: 1,
+        tools: ['taska_list_task_lists'],
+      },
+    ];
+    const { client, server } = await connect(
+      new McpService(appsStub(), gatewayStub(modules)),
+    );
+
+    try {
+      const result = await client.callTool({
+        name: 'list_mcp_modules',
+        arguments: {},
+      });
+      expect(result.isError).toBeFalsy();
+      expect(result.structuredContent).toEqual({ modules });
+    } finally {
+      await client.close();
+      await server.close();
+    }
+  });
+
   it('returns job ids from lifecycle tools', async () => {
     const start = jest.fn(() => job);
     const { client, server } = await connect(
-      new McpService(appsStub({ start })),
+      new McpService(appsStub({ start }), gatewayStub()),
     );
 
     try {
@@ -126,7 +170,7 @@ describe('McpService', () => {
       throw new NotFoundException('App nope not found');
     });
     const { client, server } = await connect(
-      new McpService(appsStub({ getApp })),
+      new McpService(appsStub({ getApp }), gatewayStub()),
     );
 
     try {

@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { AppManifest, ComponentManifest } from '../types';
+import { AppManifest, AppMcpManifest, ComponentManifest } from '../types';
 
 const MANIFEST_CANDIDATES = [
   'managa.app.json',
@@ -101,7 +101,55 @@ export class ManifestService {
       );
     }
 
+    manifest.mcp = this.normalizeMcp(input.mcp, manifest);
     return manifest;
+  }
+
+  private normalizeMcp(
+    input: AppMcpManifest | undefined,
+    manifest: AppManifest,
+  ): AppMcpManifest | undefined {
+    if (input === undefined) return undefined;
+    if (!input || typeof input !== 'object' || Array.isArray(input)) {
+      throw new BadRequestException('"mcp" must be an object');
+    }
+
+    const component =
+      input.component ?? (manifest.server ? 'server' : 'client');
+    if (component !== 'client' && component !== 'server') {
+      throw new BadRequestException(
+        '"mcp.component" must be "client" or "server"',
+      );
+    }
+    if (!manifest[component]) {
+      throw new BadRequestException(
+        `"mcp.component" is "${component}" but the manifest has no ${component} component`,
+      );
+    }
+
+    if (input.path !== undefined && typeof input.path !== 'string') {
+      throw new BadRequestException('"mcp.path" must be a string');
+    }
+    const mcpPath = (input.path ?? '/mcp').trim();
+    if (
+      !mcpPath.startsWith('/') ||
+      mcpPath.includes('..') ||
+      /[?#]/.test(mcpPath)
+    ) {
+      throw new BadRequestException(
+        '"mcp.path" must be an absolute path on the app component, such as "/mcp"',
+      );
+    }
+
+    if (input.namespace !== undefined && typeof input.namespace !== 'string') {
+      throw new BadRequestException('"mcp.namespace" must be a string');
+    }
+    const namespace = this.validateId(input.namespace ?? manifest.id!);
+    return {
+      component,
+      path: mcpPath.replace(/\/{2,}/g, '/'),
+      namespace,
+    };
   }
 
   validateId(value: string): string {

@@ -42,9 +42,33 @@
       "items": { "type": "string" }
     },
     "client": { "$ref": "#/$defs/component" },
-    "server": { "$ref": "#/$defs/component" }
+    "server": { "$ref": "#/$defs/component" },
+    "mcp": { "$ref": "#/$defs/mcp" }
   },
   "$defs": {
+    "mcp": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "An app-owned MCP server. managa bridges its tools through /mcp using the namespace prefix.",
+      "properties": {
+        "component": {
+          "type": "string",
+          "enum": ["client", "server"],
+          "description": "Component hosting the MCP endpoint. Defaults to server when present, otherwise client."
+        },
+        "path": {
+          "type": "string",
+          "pattern": "^/[^?#]*$",
+          "default": "/mcp",
+          "description": "Absolute HTTP path of the Streamable HTTP MCP endpoint on that component."
+        },
+        "namespace": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-_]*$",
+          "description": "Prefix for bridged tool names. Defaults to the app id."
+        }
+      }
+    },
     "component": {
       "type": "object",
       "required": ["dir", "start"],

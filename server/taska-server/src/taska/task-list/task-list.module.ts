@@ -9,5 +9,6 @@ import { Task } from '../../taska/tasks/entities/task.entity';
   imports: [TypeOrmModule.forFeature([TaskList, Task])],
   controllers: [TaskListController],
   providers: [TaskListService],
+  exports: [TaskListService],
 })
 export class TaskListModule {}

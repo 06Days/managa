@@ -38,6 +38,19 @@ export interface ComponentManifest {
   env?: Record<string, string>;
 }
 
+/**
+ * Describes the MCP endpoint a managed app exposes. managa bridges these
+ * module-owned tools through its own /mcp endpoint using a namespace prefix.
+ */
+export interface AppMcpManifest {
+  /** Component hosting the MCP endpoint. Defaults to server, then client. */
+  component?: ComponentKind;
+  /** HTTP path of the MCP endpoint on that component. Defaults to /mcp. */
+  path?: string;
+  /** Prefix used for bridged tool names. Defaults to the app id. */
+  namespace?: string;
+}
+
 export interface AppManifest {
   id?: string;
   name: string;
@@ -50,6 +63,8 @@ export interface AppManifest {
   tags?: string[];
   client?: ComponentManifest;
   server?: ComponentManifest;
+  /** Optional module-owned MCP tools, bridged through managa's /mcp endpoint. */
+  mcp?: AppMcpManifest;
 }
 
 export type AppSource =

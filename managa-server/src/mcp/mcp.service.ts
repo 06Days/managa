@@ -3,6 +3,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { AppsService } from '../appmanager/services/apps.service';
 import type { LogsResult } from '../appmanager/types';
+import { AppMcpGateway } from './app-mcp.gateway';
 
 interface ToolResult {
   [key: string]: unknown;
@@ -10,6 +11,22 @@ interface ToolResult {
   structuredContent?: Record<string, unknown>;
   isError?: boolean;
 }
+
+const CORE_TOOL_NAMES = [
+  'list_apps',
+  'get_app',
+  'get_app_logs',
+  'list_jobs',
+  'get_job',
+  'get_catalog',
+  'install_app',
+  'start_app',
+  'stop_app',
+  'rebuild_app',
+  'uninstall_app',
+  'restore_builtin_app',
+  'list_mcp_modules',
+] as const;
 
 function errorMessage(error: unknown): string {
   if (error instanceof HttpException) {
@@ -26,13 +43,16 @@ function errorMessage(error: unknown): string {
 
 @Injectable()
 export class McpService {
-  constructor(private readonly apps: AppsService) {}
+  constructor(
+    private readonly apps: AppsService,
+    private readonly appMcp: AppMcpGateway,
+  ) {}
 
   /**
    * Build a fresh server for each HTTP request. The MCP endpoint is stateless,
    * so there is no per-client state to keep between requests.
    */
-  createServer(): McpServer {
+  async createServer(): Promise<McpServer> {
     const server = new McpServer(
       { name: 'managa', version: '0.1.0' },
       {
@@ -42,7 +62,10 @@ export class McpService {
           'repository, so confirm with the user before calling install_app. Ask before ' +
           'stopping, rebuilding or uninstalling an app, and before uninstalling with ' +
           'purgeData. Long-running actions return a job immediately; poll get_job until ' +
-          'its status is succeeded or failed.',
+          'its status is succeeded or failed. Installed apps can also contribute their ' +
+          'own tools, namespaced with the app id (for example taska_list_task_lists). ' +
+          'Use list_mcp_modules to discover them, and confirm with the user before ' +
+          'destructive app-specific actions.',
       },
     );
 
@@ -265,6 +288,22 @@ export class McpService {
         },
       },
       async ({ id }) => this.run(() => this.apps.restoreBuiltin(id)),
+    );
+
+    const modules = await this.appMcp.registerTools(
+      server,
+      new Set<string>(CORE_TOOL_NAMES),
+    );
+
+    server.registerTool(
+      'list_mcp_modules',
+      {
+        title: 'List MCP modules',
+        description:
+          'List installed apps that expose their own MCP tools, including the namespace used by this endpoint and the currently bridged tool names.',
+        annotations: { readOnlyHint: true, openWorldHint: false },
+      },
+      async () => this.run(() => ({ modules })),
     );
 
     return server;

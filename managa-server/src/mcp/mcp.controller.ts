@@ -35,7 +35,7 @@ export class McpController {
   ): Promise<void> {
     if (!this.authorize(req, res)) return;
 
-    const server = this.mcp.createServer();
+    const server = await this.mcp.createServer();
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: undefined,
       enableJsonResponse: true,

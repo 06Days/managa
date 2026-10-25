@@ -33,5 +33,10 @@
     "env": {
       "DATABASE_PATH": "{{appDataDir}}/database.sqlite"
     }
+  },
+  "mcp": {
+    "component": "server",
+    "path": "/mcp",
+    "namespace": "taska"
   }
 }

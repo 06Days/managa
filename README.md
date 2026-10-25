@@ -39,7 +39,7 @@ Open **http://localhost:3000**.
 | managa dashboard | http://localhost:3000 |
 | managa server API | http://localhost:5100 |
 | Swagger docs | http://localhost:5100/docs |
-| MCP endpoint | http://localhost:5100/mcp |
+| MCP endpoint | http://localhost:3000/mcp (or http://localhost:5100/mcp directly) |
 
 Taska is registered automatically on first boot. Flip its switch on the
 dashboard. On the first start managa builds both components, then launches the
@@ -80,6 +80,7 @@ managa/
 │   └── lib/ + hooks/         typed API client and polling hooks
 ├── client/taska-client/      bundled Taska client (sample compatible app)
 ├── server/taska-server/      bundled Taska server (sample compatible app)
+│   └── src/taska/mcp/        Taska-owned MCP tools, bridged by managa
 ├── taska.app.json            Taska's managa manifest
 ├── data/                     runtime state (gitignored)
 └── scripts/stack.mjs         runs both managa packages
@@ -168,6 +169,11 @@ least one of `client` or `server` is required.
     "env": {
       "DATABASE_PATH": "{{appDataDir}}/database.sqlite"
     }
+  },
+  "mcp": {
+    "component": "server",
+    "path": "/mcp",
+    "namespace": "hello-managa"
   }
 }
 ```
@@ -185,6 +191,22 @@ least one of `client` or `server` is required.
 | `healthPath` | no | Path polled until it returns non-5xx. Defaults to `/`. |
 | `readyTimeoutMs` | no | Startup health timeout. Defaults to 45000. |
 | `env` | no | Environment variables, with `{{token}}` substitution. |
+
+### MCP fields
+
+An app can expose its own MCP tools by adding a top-level `mcp` object. The
+component must serve a stateless Streamable HTTP MCP endpoint.
+
+| Field | Required | Purpose |
+| --- | --- | --- |
+| `component` | no | `server` or `client`. Defaults to `server` when present, otherwise `client`. |
+| `path` | no | Endpoint path on that component. Defaults to `/mcp`. |
+| `namespace` | no | Prefix for bridged tool names. Defaults to the app id. |
+
+managa only bridges tools while the hosting component is running. It exposes
+them through the central `/mcp` endpoint as `<namespace>_<tool>`. For example,
+Taska exposes `list_task_lists` and managa publishes
+`taska_list_task_lists`.
 
 ### Environment tokens
 
@@ -230,8 +252,8 @@ a local SVG at `managa-client/public/favicon.svg`.
 
 ## API
 
-REST endpoints are under `/appmanager`; the MCP endpoint is at `/mcp`.
-Swagger is at `/docs`.
+REST endpoints are under `/appmanager`; managa-server exposes the MCP endpoint
+at `/mcp`, and the dashboard proxies it at `:3000/mcp`. Swagger is at `/docs`.
 
 | Method | Path | Description |
 | --- | --- | --- |
@@ -256,9 +278,21 @@ immediately. Poll the job for progress and logs.
 
 ## MCP server
 
-managa-server includes a [Model Context Protocol](https://modelcontextprotocol.io/)
-server at `/mcp` using the Streamable HTTP transport. It lets MCP-capable
-assistants inspect and manage apps without going through the dashboard.
+managa includes a [Model Context Protocol](https://modelcontextprotocol.io/)
+endpoint using the Streamable HTTP transport. MCP-capable assistants can inspect
+and manage managa, and each installed app can contribute its own tools.
+
+The canonical client URL is the dashboard origin:
+
+```text
+http://<host>:3000/mcp
+```
+
+The dashboard proxies that path to managa-server. The direct server endpoint
+`http://<host>:5100/mcp` still works, but the dashboard URL is the one to use
+when connecting from another machine.
+
+### Core managa tools
 
 | Tool | Purpose |
 | --- | --- |
@@ -271,23 +305,60 @@ assistants inspect and manage apps without going through the dashboard.
 | `rebuild_app` | Rebuild a stopped app |
 | `uninstall_app` | Stop and uninstall, optionally purging app data |
 | `restore_builtin_app` | Restore an uninstalled bundled app |
+| `list_mcp_modules` | Show app-provided MCP namespaces, live tools and errors |
 
 Actions that take time return a job immediately. The assistant should poll
 `get_job` until the job succeeds or fails.
+
+### Module-owned tools
+
+Apps declare their MCP endpoint in `managa.app.json`:
+
+```json
+{
+  "mcp": {
+    "component": "server",
+    "path": "/mcp",
+    "namespace": "taska"
+  }
+}
+```
+
+managa discovers the app's tools and republishes them with a namespace prefix.
+The bundled Taska app contributes:
+
+| Tool | Purpose |
+| --- | --- |
+| `taska_list_task_lists`, `taska_get_task_list` | Read lists and their tasks |
+| `taska_create_task_list`, `taska_update_task_list` | Create or rename a list |
+| `taska_delete_task_list` | Delete a list and its tasks |
+| `taska_create_task`, `taska_update_task` | Add or edit a task |
+| `taska_toggle_task` | Complete or reopen a task |
+| `taska_delete_task` | Delete a task |
+| `taska_reorder_tasks` | Set task order in a list |
+
+App tools are only bridged while the app component that hosts the MCP endpoint
+is running. Use `list_mcp_modules` to see which namespaces are currently live.
+If an app is stopped, start it with `start_app` and reconnect or re-list tools.
+
+The reference implementation is in
+`server/taska-server/src/taska/mcp/taska-mcp.service.ts`; it uses the same
+`@modelcontextprotocol/sdk` package and a stateless `POST /mcp` controller.
 
 Connect any Streamable HTTP MCP client. For example:
 
 ```bash
 # Claude Code
-claude mcp add --transport http managa http://100.96.33.106:5100/mcp
+claude mcp add --transport http managa http://100.96.33.106:3000/mcp
 
 # OpenCode
-opencode mcp add managa --url http://100.96.33.106:5100/mcp
+opencode mcp add managa --url http://100.96.33.106:3000/mcp
 ```
 
 To require a bearer token, set `MANAGA_MCP_TOKEN` before starting managa-server
 (or pass it through `compose.yaml` via the Pi's `.env`) and configure the
-client's `Authorization` header. OpenCode V2 configuration example:
+client's `Authorization` header. The dashboard proxy forwards the header, so
+the token applies to both URLs. OpenCode V2 configuration example:
 
 ```jsonc
 {
@@ -296,7 +367,7 @@ client's `Authorization` header. OpenCode V2 configuration example:
     "servers": {
       "managa": {
         "type": "remote",
-        "url": "http://100.96.33.106:5100/mcp",
+        "url": "http://100.96.33.106:3000/mcp",
         "oauth": false,
         "headers": {
           "Authorization": "Bearer {env:MANAGA_MCP_TOKEN}"
@@ -309,7 +380,8 @@ client's `Authorization` header. OpenCode V2 configuration example:
 
 `MANAGA_MCP_TOKEN` protects only `/mcp`. The dashboard and REST API remain
 unauthenticated, so keep managa on localhost or a trusted private network such
-as Tailscale.
+as Tailscale. App-owned MCP endpoints are also unauthenticated; they are
+intended for the gateway on the same host, not direct public exposure.
 
 ## Configuration
 
@@ -327,10 +399,11 @@ as Tailscale.
 | `MANAGA_CATALOG_URL` | — | Optional remote catalog JSON |
 | `MANAGA_ALLOW_GIT` | `true` | Set `false` to disable GitHub installs |
 | `MANAGA_ALLOW_LOCAL_SOURCES` | `false` | Dev-only: allow local path/`file://` git sources |
-| `MANAGA_MCP_TOKEN` | — | Optional bearer token required by `/mcp` |
+| `MANAGA_MCP_TOKEN` | — | Optional bearer token required by `/mcp` (direct or proxied) |
 
 The dashboard reads `NEXT_PUBLIC_MANAGA_API_URL`; when unset it uses
-`<current-host>:5100`. See `managa-client/.env.local.example`.
+`<current-host>:5100`. It proxies `/mcp` to `MANAGA_SERVER_URL`, which defaults
+to `http://127.0.0.1:5100`. See `managa-client/.env.local.example`.
 
 ### Lifecycle semantics
 
@@ -362,8 +435,8 @@ such as a Raspberry Pi. Host networking avoids that and exposes only the ports
 that running apps actually use.
 
 The dashboard is available on `:3000`, the API on `:5100`, the MCP endpoint on
-`:5100/mcp`, and each running app on its allocated port. `data/` is a Docker
-volume.
+`:3000/mcp` (proxied) and `:5100/mcp` (direct), and each running app on its
+allocated port. `data/` is a Docker volume.
 
 `MANAGA_PUBLIC_HOST` must be the address you use to reach the host. It is used
 for the **Open** links and baked into app client builds as the API URL. If you
@@ -394,7 +467,8 @@ Open the dashboard using the Pi's hostname, LAN IP or Tailscale IP:
 http://100.96.33.106:3000
 ```
 
-The MCP endpoint is `http://100.96.33.106:5100/mcp`.
+The MCP endpoint is `http://100.96.33.106:3000/mcp`. The direct server endpoint
+`http://100.96.33.106:5100/mcp` is also available.
 
 The dashboard rewrites app links that point at `localhost`/`127.0.0.1` to the
 hostname used in the browser. Bundled Taska also proxies its API through

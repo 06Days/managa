@@ -15,7 +15,7 @@ services:
       # Set this to the address used to reach the host, for example
       # http://raspberrypi.local or http://192.168.1.50.
       - MANAGA_PUBLIC_HOST=${MANAGA_PUBLIC_HOST:-http://localhost}
-      # Optional bearer token for the MCP endpoint at /mcp.
+      # Optional bearer token for the MCP endpoint at /mcp (direct or proxied).
       - MANAGA_MCP_TOKEN=${MANAGA_MCP_TOKEN:-}
     volumes:
       - managa_data:/app/data
@@ -28,6 +28,8 @@ services:
     environment:
       - PORT=3000
       - HOSTNAME=0.0.0.0
+      # The dashboard proxies /mcp to managa-server on the host network.
+      - MANAGA_SERVER_URL=http://127.0.0.1:5100
     depends_on:
       - managa-server
     restart: unless-stopped

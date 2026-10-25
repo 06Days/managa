@@ -25,6 +25,8 @@ services:
     environment:
       - PORT=3000
       - HOSTNAME=0.0.0.0
+      # The dashboard proxies /mcp to managa-server on the host network.
+      - MANAGA_SERVER_URL=http://127.0.0.1:5100
     depends_on:
       - managa-server
     restart: unless-stopped

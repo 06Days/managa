@@ -6,7 +6,9 @@ RUN npm ci --no-audit --no-fund
 FROM node:22-alpine AS build
 WORKDIR /app
 ARG NEXT_PUBLIC_MANAGA_API_URL
+ARG MANAGA_SERVER_URL=http://127.0.0.1:5100
 ENV NEXT_PUBLIC_MANAGA_API_URL=$NEXT_PUBLIC_MANAGA_API_URL
+ENV MANAGA_SERVER_URL=$MANAGA_SERVER_URL
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build

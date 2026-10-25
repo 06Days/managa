@@ -8,23 +8,23 @@ import { TaskListModule } from './taska/task-list/task-list.module';
 import { TaskList } from './taska/task-list/entities/task-list.entity';
 
 import { AppManagerModule } from './appmanager/app-manager.module';
+import { TaskaMcpModule } from './taska/mcp/taska-mcp.module';
 
 @Module({
-  
   controllers: [AppController],
   providers: [AppService],
-  imports: [TaskListModule, 
-    
+  imports: [
+    TaskListModule,
+
     TypeOrmModule.forRoot({
       type: 'better-sqlite3',
       database: process.env.DATABASE_PATH ?? 'database.sqlite',
       entities: [Task, TaskList],
-      synchronize: true, 
+      synchronize: true,
     }),
     TasksModule,
     AppManagerModule,
-    
-  
+    TaskaMcpModule,
   ],
 })
 export class AppModule {}
